@@ -59,7 +59,7 @@ void* communicationConsole(void *communication_socket) {
     }
 
     char test[BUFFER];
-    ssize_t rc = recv(socket_client, test, BUFFER, MSG_DONTWAIT);
+    ssize_t rc = recv(socket_client, test, BUFFER, 0);
     
     pthread_mutex_lock(&socket_mutex);
     if (rc <= 0) {

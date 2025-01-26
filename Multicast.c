@@ -25,6 +25,21 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // Activer SO_REUSEADDR pour permettre à plusieurs sockets de se lier à la même adresse et port
+    int reuse = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+        perror("Erreur lors de l'activation de SO_REUSEADDR");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
+    // Activer SO_REUSEPORT pour permettre à plusieurs sockets de se lier exactement au même port
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) < 0) {
+        perror("Erreur lors de l'activation de SO_REUSEPORT");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
     // Remplir la structure d'adresse
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;

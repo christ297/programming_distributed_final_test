@@ -84,7 +84,7 @@ int main(int argc, const char *argv[])
                     break;
                 }
 
-                send(socket_tcp, toBytes(&chauffage_initiale), BUFFER, MSG_DONTWAIT);
+                send(socket_tcp, toBytes(&chauffage_initiale), BUFFER, 0);
 
                 printf("Chauffage pour la piece %s : Etat = ", chauffage_initiale.piece);
                 if (chauffage_initiale.valeur == 0)

@@ -69,7 +69,7 @@ int main(int argc, const char *argv[])
             else if (activity == 0)
             {
                 // Aucune donnée disponible avant la fin du timeout
-                printf("Aucune donnée disponible pour l'instant.\n");
+                //printf("Aucune donnée disponible pour l'instant.\n");
                 continue;
             }
 

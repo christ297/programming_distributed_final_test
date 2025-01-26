@@ -37,22 +37,24 @@ lancer_terminal() {
 # Lancer tous les programmes en parallèle
 echo "Lancement des programmes dans des terminaux indépendants..."
 lancer_terminal "Air" "$AIR $MULTICAST_ADDR $PORT_MULTICAST $PIECE"
+sleep 1
 lancer_terminal "Multicast" "$MULTICAST $MULTICAST_ADDR $PORT_MULTICAST"
+sleep 1
 lancer_terminal "Système Central" "$SYSTEM_CENTRAL $MULTICAST_ADDR $PORT_TCP $PORT_UDP $MAX_CLIENT"
 sleep 1
 lancer_terminal "Communication Temperature" "$COMMUNICATION_TEMPERATURE $PORT_TCP $MAX_CLIENT"
 sleep 1
-lancer_terminal "Commande" "$COMMANDE $ADRESSE_SERVEUR $PORT_TCP"
+lancer_terminal "Thermometre" "$THERMOMETRE $MULTICAST_ADDR $PORT_UDP $ADRESSE_SERVEUR $PORT_TCP $PIECE"
 sleep 1
 lancer_terminal "Chauffage" "$CHAUFFAGE $MULTICAST_ADDR $PORT_UDP $ADRESSE_SERVEUR $PORT_TCP $PIECE"
 sleep 1
-lancer_terminal "Thermometre" "$THERMOMETRE $MULTICAST_ADDR $PORT_UDP $ADRESSE_SERVEUR $PORT_TCP $PIECE"
+lancer_terminal "RMI" "$RMI $MULTICAST_ADDR $PORT_MULTICAST"
 sleep 1
 lancer_terminal "Console" "$CONSOLE $ADRESSE_SERVEUR $PORT_TCP"
 sleep 1
-lancer_terminal "RMI" "$RMI $MULTICAST_ADDR $PORT_MULTICAST"
-sleep 1
 lancer_terminal "Console Java" "$CONSOLE_JAVA"
+sleep 1
+lancer_terminal "Commande" "$COMMANDE $ADRESSE_SERVEUR $PORT_TCP"
 
 
 

@@ -113,7 +113,7 @@ MessageTemperature *recevoirDemandeChauffage(int socket) {
     if (socket == -1) return NULL;
 
     u_char buffer[BUFFER];
-    ssize_t octet = recv(socket, buffer, sizeof(buffer), MSG_DONTWAIT);
+    ssize_t octet = recv(socket, buffer, sizeof(buffer), 0);
 
     if (octet == -1) {
         perror("Erreur lors de la réception de la demande de chauffage depuis le système central");
@@ -137,7 +137,7 @@ ssize_t envoyerAccuser(int socket, MessageTemperature *demande_chauffage) {
     printf("La demande de chauffage pour la Pièce = %s, Puissance = %d a bien été reçue.\n",
            demande_chauffage->piece, demande_chauffage->valeur);
 
-    return send(socket, toBytes(demande_chauffage), BUFFER, MSG_DONTWAIT);
+    return send(socket, toBytes(demande_chauffage), BUFFER, 0);
 }
 
 #endif // CHAUFFAGE_H
