@@ -1,37 +1,20 @@
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "Type.h"
 
 #define BUFFER 128
+#define MAX_PIECE_LENGTH 99 // 100 - 1 pour le terminateur NULL
 
 #ifndef MESSAGETEMPERATURE_H
 #define MESSAGETEMPERATURE_H
 
-/**
- * Définition du type @MessageTemperature
- *
- * Message contenant des informations ou des demandes sur l'air d'une
- * pièce. S'il est de type "mesure", il contient alors la valeur de la
- * température courante de l'air. S'il est de type "chauffer", il
- * contient une demande de chauffage à effectuer.
- * Voici une implementation de message en C
- *
- */
-typedef struct MessageTemperature MessageTemperature;
-
-struct MessageTemperature
-{
+typedef struct MessageTemperature {
     char piece[100];
     int valeur;
     unsigned char type;
-};
+} MessageTemperature;
 
-/**
- * Retourne la valeur stockée dans le message.
-*/
 int getValeur(struct MessageTemperature *msg)
 {
     return msg -> valeur;
@@ -54,73 +37,55 @@ char* getPiece(struct MessageTemperature *msg)
     return msg -> piece;
 }
 
-/**
- * Convertit le message en son équivalent en tableau de byte.
-*/
-unsigned char* toBytes(struct MessageTemperature *msg)
-{
-    unsigned char *tab = (unsigned char*)malloc(strlen(msg -> piece) + 5);
-    int val = msg -> valeur;
-    for (int i = 0; i < 4; i++)
-    {
-        tab[i] = (unsigned char)(val & 0x000000FF);
-        val = val >> 8;
+unsigned char* toBytes(struct MessageTemperature *msg) {
+    // Taille calculée : 4(int) + 1(char) + strlen(piece) + 1(NULL)
+    size_t piece_len = strnlen(msg->piece, MAX_PIECE_LENGTH);
+    unsigned char *tab = (unsigned char*)malloc(5 + piece_len + 1);
+    
+    // Écriture little-endian de la valeur
+    for (int i = 0; i < 4; i++) {
+        tab[i] = (msg->valeur >> (i * 8)) & 0xFF;
     }
-    tab[4] = msg -> type;
-    unsigned char *tabPiece = (unsigned char*)msg -> piece;
-
-    for (int i = 0; i < strlen(msg -> piece); i++)
-    {
-        tab[i + 5] = tabPiece[i];
-    }
+    
+    tab[4] = msg->type;
+    
+    // Copie sécurisée avec termination NULL
+    strncpy((char*)tab + 5, msg->piece, piece_len);
+    tab[5 + piece_len] = '\0'; // Termination explicite
+    
     return tab;
 }
 
-
-/**
- * Crèe un nouveau message.
- * @param valeur le niveau de température ou la puissance du chauffage
- * @param type le type du message (<code>MESURE</code> ou <code>CHAUFFER</code>)
- * @param piece le nom de le pièce considérée
-*/
-struct MessageTemperature* createMessageTemperature(int valeur, unsigned char type, char *piece)
-{
-    struct MessageTemperature *msg = malloc(sizeof(MessageTemperature));
-    msg -> valeur = valeur;
-    msg -> type = type;
-    strncpy(msg -> piece, piece, strlen(piece));
+struct MessageTemperature* createMessageTemperature(int valeur, unsigned char type, char *piece) {
+    struct MessageTemperature *msg = (struct MessageTemperature*)malloc(sizeof(MessageTemperature));
+    msg->valeur = valeur;
+    msg->type = type;
+    
+    // Copie sécurisée avec termination NULL
+    strncpy(msg->piece, piece, MAX_PIECE_LENGTH);
+    msg->piece[MAX_PIECE_LENGTH] = '\0';
+    
     return msg;
 }
 
-
-/**
- * Retourne un message à partir de son équivalent en tableau de byte.
- * @param tab le tableau de byte contenant le message
- * @param length le nombre de cases à considérer dans le tableau
- * @return une instance de message initialisée avec le contenu du
- * tableau
-*/
-struct MessageTemperature* fromBytes(unsigned char *tab, int length)
-{
-    int val[4];
-    for (int i = 0; i < 4; i++)
-    {
-        if (tab[i] < 0)
-        {
-            val[i] = (tab[i] + 256) << (i * 8);
-        }
-        else
-        {
-            val[i] = tab[i] << (i * 8);
-        }
+struct MessageTemperature* fromBytes(unsigned char *tab, int length) {
+    if (length < 5) return NULL; // Taille minimale
+    
+    // Décodage little-endian
+    int valeur = 0;
+    for (int i = 0; i < 4; i++) {
+        valeur |= (tab[i] << (i * 8));
     }
-    int valeur = val[0] | val[1] | val[2] | val[3];
-
-    char *piece = (char*)malloc(length - 5);
-
-    strncpy(piece, (char*)tab + 5, length - 5);
-
+    
+    // Calcul longueur pièce sécurisé
+    size_t piece_len = strnlen((char*)tab + 5, length - 5);
+    
+    // Allocation avec espace pour NULL
+    char *piece = (char*)malloc(piece_len + 1);
+    strncpy(piece, (char*)tab + 5, piece_len);
+    piece[piece_len] = '\0';
+    
     return createMessageTemperature(valeur, tab[4], piece);
 }
 
-#endif //MESSAGETEMPERATURE_H
+#endif

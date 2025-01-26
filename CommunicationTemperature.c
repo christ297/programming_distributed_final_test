@@ -1,7 +1,3 @@
-
-
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,7 +80,7 @@ int main(int argc, char *argv[])
                     // La socket est notre socket serveur qui écoute le port
                     int socket_client = accepterConnexionClient(socket_tcp);
                     add_to_poll_fds(&poll_fds, socket_client, &poll_count, &poll_size);
-                    annoncerClient(&socket_client);
+                    annoncerClient(socket_client);
                 }
                 else
                 {
@@ -102,13 +98,16 @@ int main(int argc, char *argv[])
 
                         int resultat;
 
-                        pthread_create(&demande_chauffage_thread, NULL, communicationConsole, (void *) socket_cli);
-
-                        pthread_join(demande_chauffage_thread, (void *)&resultat);
+                        int *socket_cli_ptr = malloc(sizeof(int));
+                        *socket_cli_ptr = socket_cli;
+                        pthread_create(&demande_chauffage_thread, NULL, communicationConsole, (void *) socket_cli_ptr);
+                       // pthread_join(demande_chauffage_thread, (void *)&resultat);
+                        pthread_detach(demande_chauffage_thread);
 
                         if(resultat == -1)
                         {
                             close(socket_cli);
+                            socket_cli = -1; // Ajoutez cette ligne
                             del_from_poll_fds(&poll_fds, i, &poll_count);
                         }
                     }

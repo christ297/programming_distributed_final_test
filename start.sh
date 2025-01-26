@@ -27,24 +27,33 @@ RMI="java ServeurRMI"
 THERMOMETRE="./Thermometre"
 AIR="java Air"
 
-# Fonction pour lancer un programme dans un nouvel onglet
-lancer_onglet() {
+# Fonction pour lancer un programme dans un terminal indépendant
+lancer_terminal() {
     local titre="$1"
     local commande="$2"
-    gnome-terminal --tab --title="$titre" -- bash -c "$commande; exec bash"
+    gnome-terminal --title="$titre" -- bash -c "$commande; exec bash" &
 }
 
-# Lancer chaque programme dans un onglet séparé
-echo "Lancement des programmes dans des onglets séparés..."
+# Lancer tous les programmes en parallèle
+echo "Lancement des programmes dans des terminaux indépendants..."
+lancer_terminal "Air" "$AIR $MULTICAST_ADDR $PORT_MULTICAST $PIECE"
+lancer_terminal "Multicast" "$MULTICAST $MULTICAST_ADDR $PORT_MULTICAST"
+lancer_terminal "Système Central" "$SYSTEM_CENTRAL $MULTICAST_ADDR $PORT_TCP $PORT_UDP $MAX_CLIENT"
+sleep 1
+lancer_terminal "Communication Temperature" "$COMMUNICATION_TEMPERATURE $PORT_TCP $MAX_CLIENT"
+sleep 1
+lancer_terminal "Commande" "$COMMANDE $ADRESSE_SERVEUR $PORT_TCP"
+sleep 1
+lancer_terminal "Chauffage" "$CHAUFFAGE $MULTICAST_ADDR $PORT_UDP $ADRESSE_SERVEUR $PORT_TCP $PIECE"
+sleep 1
+lancer_terminal "Thermometre" "$THERMOMETRE $MULTICAST_ADDR $PORT_UDP $ADRESSE_SERVEUR $PORT_TCP $PIECE"
+sleep 1
+lancer_terminal "Console" "$CONSOLE $ADRESSE_SERVEUR $PORT_TCP"
+sleep 1
+lancer_terminal "RMI" "$RMI $MULTICAST_ADDR $PORT_MULTICAST"
+sleep 1
+lancer_terminal "Console Java" "$CONSOLE_JAVA"
 
-lancer_onglet "Communication Temperature" "$COMMUNICATION_TEMPERATURE $PORT_TCP $MAX_CLIENT"
-lancer_onglet "Commande" "$COMMANDE $ADRESSE_SERVEUR $PORT_TCP"
-lancer_onglet "Air" "$AIR $MULTICAST_ADDR $PORT_MULTICAST $PIECE"
-lancer_onglet "Chauffage" "$CHAUFFAGE $MULTICAST_ADDR $PORT_UDP $ADRESSE_SERVEUR $PORT_TCP $PIECE"
-lancer_onglet "Thermometre" "$THERMOMETRE $MULTICAST_ADDR $PORT_UDP $ADRESSE_SERVEUR $PORT_TCP $PIECE"
-lancer_onglet "Console" "$CONSOLE $ADRESSE_SERVEUR $PORT_TCP"
-lancer_onglet "Console Java" "$CONSOLE_JAVA"
-lancer_onglet "RMI" "$RMI $MULTICAST_ADDR $PORT_MULTICAST"
-lancer_onglet "Système Central" "$SYSTEM_CENTRAL $MULTICAST_ADDR $PORT_TCP $PORT_UDP $MAX_CLIENT"
 
-echo "Tous les programmes ont été lancés dans des onglets séparés."
+
+echo "Tous les programmes ont été lancés simultanément !"

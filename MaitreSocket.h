@@ -1,5 +1,3 @@
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,7 +51,7 @@ int configurerSocketUDP(const char *multicast_group, unsigned int port, struct s
 
     int reuse = 1;
     // Joindre le groupe multicast
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (int *)&reuse, sizeof (reuse)) < 0)
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (int *)&reuse, sizeof(reuse)) < 0)
     {
         perror("Erreur lors de la configuration du groupe multicast");
         close(sockfd);
@@ -75,21 +73,12 @@ int configuerSocketTCP(const char *serveur_addr, unsigned int port)
 {
     int socket_tcp;
     struct sockaddr_in addr_serveur;
-    char hostname[128];
 
     // création de la socket TCP
     if ((socket_tcp = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         perror("Erreur lors de la creation de la socket tcp");
-        close(socket_tcp);
         return -1;
-    }
-
-    // récupération
-    if(gethostname(hostname, 128) != 0)
-    {
-        perror("Erreur lors de la recuperation du nom d'hote");
-        close(socket_tcp);
     }
 
     // création de l'identifiant de la socket d'écoute du serveur
@@ -101,7 +90,6 @@ int configuerSocketTCP(const char *serveur_addr, unsigned int port)
     // connexion de la socket client locale à la socket coté serveur
     if (connect(socket_tcp, (struct sockaddr *)&addr_serveur, sizeof(struct sockaddr_in)) == -1)
     {
-//       perror("Erreur lors de la connexion au serveur");
         close(socket_tcp);
         return -1;
     }

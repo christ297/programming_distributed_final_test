@@ -45,6 +45,9 @@ ssize_t envoyerAccuser(int socket, MessageTemperature *demande_chauffage);
 MessageTemperature *recevoirDemandeChauffage(int socket);
 
 int ecrireSocket(int socket_tcp, int socket_udp, struct sockaddr *addr, MessageTemperature *msg) {
+    // Dans ecrireSocket()
+int reuse = 1;
+setsockopt(socket_udp, SOL_SOCKET, SO_BROADCAST, &reuse, sizeof(reuse));
     if (socket_tcp == -1) return -1;
 
     MessageTemperature *demande_chauffage = recevoirDemandeChauffage(socket_tcp);

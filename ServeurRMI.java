@@ -20,7 +20,7 @@ public class ServeurRMI
         if (args.length < 2)
         {
             System.err.println("Erreur dans les arguments !");
-            System.err.println("Usage : $ java sources.java.ServeurRMI groupeMulticast portMulticast");
+            System.err.println("Usage : $ java ServeurRMI groupeMulticast portMulticast");
             System.exit(1);
         }
 

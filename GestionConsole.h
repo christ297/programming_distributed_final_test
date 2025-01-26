@@ -1,5 +1,3 @@
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +12,7 @@
 #ifndef OSIRIS_GESTIONCONSOLE_H
 #define OSIRIS_GESTIONCONSOLE_H
 
-struct sock_com_udp{
+struct sock_com_udp {
     int socket;
     struct sockaddr_in addr;
     socklen_t addr_size;
@@ -41,38 +39,30 @@ void *communicationTcp(void *ptr);
  */
 void *udpAction(void *ptr);
 
-int demarrerServeurUdp(struct sockaddr_in addr)
-{
+int demarrerServeurUdp(struct sockaddr_in addr) {
     int socket_serveur;
     int opt = 1;
 
     // Création de la socket en UDP
-    if ((socket_serveur = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-    {
+    if ((socket_serveur = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         perror("Erreur lors de la création de la socket");
         return -1;
     }
-if (setsockopt(socket_serveur, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
+
+    if (setsockopt(socket_serveur, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
         perror("Erreur lors de l'activation de SO_REUSEPORT pour la socket UDP");
         close(socket_serveur);
         return -1;
     }
+
     if (setsockopt(socket_serveur, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("Erreur lors de l'activation de SO_REUSEADDR pour la socket UDP");
         close(socket_serveur);
         return -1;
     }
 
-    
-//    // Paramètrage de la socket
-//    if (setsockopt(socket_serveur, SOL_SOCKET, SO_KEEPALIVE, &opt,
-//                   sizeof(opt)) != 0) {
-//        perror("Erreur lors du parametrage de la socket");
-//        return -1;
-//    }
-
     // Attachement de la socket sur le port et l'adresse IP
-    if (bind(socket_serveur, (struct sockaddr *) &addr, sizeof(addr)) != 0) {
+    if (bind(socket_serveur, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
         perror("Erreur lors de la liaison de la socket d'ecoute");
         return -1;
     }
@@ -80,19 +70,18 @@ if (setsockopt(socket_serveur, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
     return socket_serveur;
 }
 
-int demarrerMulticastUdp(struct sockaddr_in addr, const char *multicast_group)
-{
+int demarrerMulticastUdp(struct sockaddr_in addr, const char *multicast_group) {
     int socket_serveur;
     struct ip_mreq mreq;
-    int opt=1;
+    int opt = 1;
 
     // Création de la socket en UDP
-    if ((socket_serveur = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-    {
+    if ((socket_serveur = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         perror("Erreur lors de la création de la socket");
         return -1;
     }
-if (setsockopt(socket_serveur, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+
+    if (setsockopt(socket_serveur, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("Erreur lors de l'activation de SO_REUSEADDR pour la socket UDP");
         close(socket_serveur);
         return -1;
@@ -104,9 +93,9 @@ if (setsockopt(socket_serveur, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
         close(socket_serveur);
         return -1;
     }
+
     // Lier la socket à l'adresse et au port
-    if (bind(socket_serveur, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-    {
+    if (bind(socket_serveur, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         perror("Erreur lors de la liaison de la socket");
         close(socket_serveur);
         return -1;
@@ -126,56 +115,61 @@ if (setsockopt(socket_serveur, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
     return socket_serveur;
 }
 
-void *communicationTcp(void *ptr)
-{
-    while(1)
-    {
+void *communicationTcp(void *ptr) {
+    int socket_client = *((int *)ptr); // Correction : Cast correct pour récupérer la socket
+    free(ptr); // Libérer la mémoire allouée pour le pointeur
+
+    while (1) {
         u_char buffer[BUFFER];
         MessageTemperature *msg = lireDansFichier(buffer, PIECE_FILE_LOCATION);
 
-        if(msg != NULL)
-        {
-            envoyerReponseTcp(*((int *)&ptr), msg);
+        if (msg != NULL) {
+            if (envoyerReponseTcp(socket_client, msg) == -1) {
+                perror("Erreur lors de l'envoi de la réponse TCP");
+                break;
+            }
+            free(msg); // Libérer la mémoire allouée pour le message
         }
 
         sleep(3);
     }
+
+    close(socket_client);
+    pthread_exit(NULL);
 }
 
-void *udpAction(void *ptr)
-{
+void *udpAction(void *ptr) {
     struct sock_com_udp udpsock = *(struct sock_com_udp *)ptr;
     u_char hello[BUFFER];
 
     ssize_t received_bytes = recvfrom(udpsock.socket, hello, BUFFER, 0, (struct sockaddr *)&udpsock.addr, &udpsock.addr_size);
-    if (received_bytes <= 0)
-    {
-        if (received_bytes == 0)
-        {
-            perror(0);
-            pthread_exit(NULL);
+    if (received_bytes <= 0) {
+        if (received_bytes == 0) {
+            perror("Connexion fermée par le client");
+        } else {
+            perror("Erreur lors de la réception du message UDP");
         }
-        else
-        {
-            perror("-1");
-            pthread_exit(NULL);
-        }
-    }
-    else
-    {
-        printf("Systeme Central [SERVEUR RMI] est en ligne : %s", hello);
+        pthread_exit(NULL);
+    } else {
+        printf("Systeme Central [SERVEUR RMI] est en ligne : %s\n", hello);
     }
 
     u_char buffer[BUFFER];
 
-    while (1)
-    {
+    while (1) {
         MessageTemperature *msg = lireDansFichier(buffer, PIECE_FILE_LOCATION);
 
-        if ((envoyerReponseUdp(udpsock.socket, udpsock.addr, msg)) == -1) perror("Echec de l'envoi au systeme central [Serveur RMI]");
+        if (msg != NULL) {
+            if (envoyerReponseUdp(udpsock.socket, udpsock.addr, msg) == -1) {
+                perror("Echec de l'envoi au systeme central [Serveur RMI]");
+            }
+            free(msg); // Libérer la mémoire allouée pour le message
+        }
 
         sleep(1);
     }
+
+    pthread_exit(NULL);
 }
 
-#endif //OSIRIS_GESTIONCONSOLE_H
+#endif // OSIRIS_GESTIONCONSOLE_H
